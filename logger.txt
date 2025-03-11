@@ -1,0 +1,57 @@
+const appRoot = require('app-root-path');
+const winston = require('winston');
+
+//common log levels: 
+// debug - Detailed technical information (used for debugging).
+// info - General information about app events.
+// warn - Something unexpected happened, but the app can still run.
+// error - A serious issue occurred, but the app can still continue.
+// fatal - A critical issue that forces the app to stop.
+
+
+// define the custom settings for each transport (file, console)
+const options = {
+    fileError: {
+        level: 'debug',
+        filename: `${appRoot}/logs/rest-api-errors.log`,
+        handleExceptions: true,
+        json: false,
+        maxsize: 5242880, // 5MB
+        maxFiles: 5,
+        colorize: true,
+    },
+    console: {
+        level: 'debug',
+        handleExceptions: true,
+        json: false,
+        colorize: true,
+    },
+};
+
+// instantiate a new Winston Logger with the settings defined above
+let logger;
+if (process.env.logging === 'off') {
+    logger = winston.createLogger({
+        transports: [
+            new winston.transports.File(options.file),
+        ],
+        exitOnError: false, // do not exit on handled exceptions
+    });
+} else {
+    logger = winston.createLogger({
+        transports: [
+            new winston.transports.File(options.fileError),
+            new winston.transports.Console(options.console)
+        ],
+        exitOnError: false, // do not exit on handled exceptions
+    });
+}
+
+// create a stream object with a 'write' function that will be used by `morgan`
+logger.stream = {
+    write(message) {
+        logger.info(message);
+    },
+};
+
+module.exports = logger;
